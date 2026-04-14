@@ -20,7 +20,7 @@ const char *INVALID_OPTION = "Некорректный флаг.";
 
 int safety_write(const int fd, const char *str, size_t n) {
   ssize_t total_written = 0;
-  while (total_written < n) {
+  while (total_written < (ssize_t)n) {
     size_t len = n - total_written;
     ssize_t written = write(fd, str + total_written, len);
     if (written <= 0) {
@@ -83,7 +83,7 @@ int print_char(char ch) {
   return 0;
 }
 
-const int cat_fd(const int fd, int *line_count, const int mask) {
+int cat_fd(const int fd, int *line_count, const int mask) {
   char buffer[NUMBER_OF_BYTES];
   ssize_t read_code = 0;
   while ((read_code = read(fd, buffer, NUMBER_OF_BYTES)) > 0) {

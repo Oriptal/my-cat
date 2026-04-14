@@ -12,7 +12,7 @@
 ## Сборка
 
 ```bash
-cc -Wall -Wextra -Wpedantic -std=c11 -o my_cat main.c
+cc -Wall -Wextra -Wpedantic -std=c23 -o my_cat main.c
 ```
 
 ## Запуск
