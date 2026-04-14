@@ -44,6 +44,9 @@ int parse_short_opts(const char *args, int *mask) {
     case 's':
       *mask |= 1 << 2;
       break;
+    case 'E':
+      *mask |= 1 << 3;
+      break;
     default:
       return args[i];
       break;
@@ -58,15 +61,22 @@ ssize_t find_delim(const char *str, size_t start, size_t read_code,
   while (ind < read_code && str[ind] != delim) {
     ind++;
   }
-
   return ind;
 }
 
-int print_line_count(const int line_count, const int mask) {
+int print_line_count(const int line_count) {
   char line_buffer[10];
   snprintf(line_buffer, 10, "%6d\t", line_count);
   if (safety_write(STDOUT_FILENO, line_buffer, strlen(line_buffer)) ==
       IO_ERROR_CODE) {
+    perror(IO_ERROR);
+    return IO_ERROR_CODE;
+  }
+  return 0;
+}
+
+int print_char(char ch) {
+  if (safety_write(STDOUT_FILENO, &ch, 1) == IO_ERROR_CODE) {
     perror(IO_ERROR);
     return IO_ERROR_CODE;
   }
@@ -87,15 +97,14 @@ const int cat_fd(const int fd, int *line_count, const int mask) {
       if (mask & (1 << 2) && is_blank_line && prev_was_blank) {
         continue;
       }
-      size_t len = 0;
-      if (index < read_code) {
-        len = index - old_index + 1;
-      } else {
-        len = index - old_index;
+      size_t len = index - old_index;
+      if (mask & (1 << 3)) {
       }
       if (!(mask & (1 << 1) && is_blank_line)) {
-        if (print_line_count(*line_count, mask) != 0) {
-          return IO_ERROR_CODE;
+        if (mask & ((1 << 0) | (1 << 1))) {
+          if (print_line_count(*line_count) != 0) {
+            return IO_ERROR_CODE;
+          }
         }
       }
 
@@ -104,6 +113,16 @@ const int cat_fd(const int fd, int *line_count, const int mask) {
         perror(IO_ERROR);
         return IO_ERROR_CODE;
       }
+
+      if (buffer[old_index + len] == '\n') {
+        if (mask & (1 << 3) && print_char('$') != 0) {
+          return IO_ERROR_CODE;
+        }
+        if (print_char('\n') != 0) {
+          return IO_ERROR_CODE;
+        }
+      }
+
       if (!(mask & (1 << 1) && index == old_index)) {
         (*line_count)++;
       }
